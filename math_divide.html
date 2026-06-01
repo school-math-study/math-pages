@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>数式のみ ～わり算 ver.～</title>
+
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .formula {
+    font-size: 40px;
+    margin-top: 25px;
+  }
+
+  .section {
+    margin-top: 25px;
+    font-size: 22px;
+  }
+
+  button {
+    font-size: 22px;
+    padding: 10px 30px;
+    margin-top: 20px;
+  }
+
+  #judge-area {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  #judge1, #judge2 {
+    font-size: 80px;
+    min-width: 80px;
+  }
+
+  .correct { color: red; }
+  .wrong { color: blue; }
+
+  .disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .big-radio {
+    transform: scale(1.8);
+    margin: 10px;
+  }
+
+  .large-select {
+    font-size: 20px;
+    padding: 15px;
+    width: 80px;
+  }
+
+  .top-btn {
+    margin-top: 50px;
+    font-size: 18px;
+  }
+
+  .answer-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 15px;
+    flex-wrap: nowrap;
+  }
+
+  .judge-area-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 30px;
+  }
+
+  .input-inline {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    white-space: nowrap;
+  }
+
+  #step2 {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+  }
+
+  #step2.show {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.4s ease-out;
+    pointer-events: auto;
+  }
+
+  /* === 共通：スーッと出す === */
+  .fade-slide {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .fade-slide.show {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.4s ease-out;
+  }
+
+  /* transform 書き換え用 */
+  #transform,
+  #finalLine {
+    transition: all 1.5s ease-out;
+  }
+
+  .wrong-box {
+    border: 4px solid blue;
+    border-radius: 10px;
+    padding: 5px;
+  }
+
+</style>
+</head>
+
+<body>
+
+<!-- 問題と変形 -->
+<div id="problem" class="formula"></div>
+<div id="transform" class="formula"></div>
+<div id="finalLine" class="formula fade-slide"></div>
+
+<!-- ===== 第1段階：変形の符号 ===== -->
+<div id="step1" class="answer-row">
+  <div>
+    <label id="box1">
+    <font size="5">①</font>
+    <label><input type="radio" name="midSign" value="+" class="big-radio"><font size="5">＋　</font></label>
+    <label><input type="radio" name="midSign" value="-" class="big-radio"><font size="5">－</font></label>
+    </label>
+  </div>
+
+  <div class="judge-area-inline">
+    <button onclick="checkStep1()">①判定</button>
+    <span id="judge1"></span>
+  </div>
+</div>
+
+
+<!-- ===== 第2段階：最終解答 ===== -->
+<div id="step2" class="answer-row fade-slide">
+
+  <!-- 符号部分 -->
+  <div id="boxSign">
+    <span><font size="5">②</font></span>
+    <label><input type="radio" name="ansSign" value="plus" class="big-radio"><font size="5">＋　</font></label>
+    <label><input type="radio" name="ansSign" value="minus" class="big-radio"><font size="5">－　</font></label>
+    <label><input type="radio" name="ansSign" value="zero" class="big-radio"><font size="5">符号なし　</font></label>
+  </div>
+
+  <!-- 数字部分 -->
+  <div id="boxNum">
+    <select id="ansNum" class="large-select"></select>
+  </div>
+
+  <!-- 判定 -->
+  <div class="judge-area-inline">
+    <button onclick="checkStep2()">②判定</button>
+    <span id="judge2"></span>
+  </div>
+
+</div>
+<br>
+<button id="nextBtn" class="disabled" onclick="newProblem()">次へ</button>
+
+<div id="score" style="font-size:20px; margin-top:10px;">
+  正解回数：<span id="scoreNum">0</span>
+</div>
+
+<div class="top-btn">
+  <a href="index.html">⬅ TOPへ戻る</a>
+</div>
+
+
+<script>
+// ===== 状態 =====
+let a, b;
+let correctSign1; // ①の正解（plus / minus）
+let correctSign2; // ②の正解（plus / minus / zero）
+let correctNum;   // ②の数字
+let correctCount = 0;  // 正解回数（その場限り）
+
+
+// 表示用（全角変換）
+function dispSign(sign) {
+  return sign === "+" ? "＋" : "－";
+}
+
+// 数字プルダウン
+const sel = document.getElementById("ansNum");
+for (let i = 0; i <= 81; i++) {
+  const o = document.createElement("option");
+  o.value = i;
+  o.textContent = i;
+  sel.appendChild(o);
+}
+
+function randSign() {
+  return Math.random() < 0.5 ? 1 : -1;
+}
+function randNum() {
+  return Math.floor(Math.random() * 10) + 1;
+}
+
+// 新しい問題
+function newProblem() {
+  // 割る数（±1～±9）
+  b = randSign() * (Math.floor(Math.random() * 9) + 1);
+
+  // 商（±1～±9）
+  const q = randSign() * (Math.floor(Math.random() * 9) + 1);
+
+  // 割られる数を作る（必ず割り切れる）
+  a = b * q;
+    // ①：符号だけ
+    correctSign1 = (a * b > 0) ? "plus" : "minus";
+
+  // 問題表示
+  document.getElementById("problem").textContent =
+    `(${a >= 0 ? "＋" : "－"}${Math.abs(a)}) ÷ (${b >= 0 ? "＋" : "－"}${Math.abs(b)})`;
+
+  document.getElementById("transform").textContent =
+    `＝①（${Math.abs(a)}÷${Math.abs(b)}）`;
+
+  document.getElementById("finalLine").textContent = "";
+
+  // ②：最終解答
+  const total = a / b;
+  correctNum = Math.abs(total);
+
+  if (total > 0) correctSign2 = "plus";
+  else if (total < 0) correctSign2 = "minus";
+  else correctSign2 = "zero";
+
+  resetUI();
+}
+
+
+function resetUI() {
+  // ① 判定表示を消す
+  document.getElementById("judge1").textContent = "";
+  document.getElementById("judge1").className = "";
+
+  // ② 判定表示を消す
+  document.getElementById("judge2").textContent = "";
+  document.getElementById("judge2").className = "";
+
+  // ②行（＝②）を消す
+  document.getElementById("finalLine").textContent = "";
+
+  // ②を隠す
+  document.getElementById("step2").classList.remove("show");
+
+  // 次へを無効化
+  document.getElementById("nextBtn").classList.add("disabled");
+
+  // ===== ラジオボタンをグループごとに確実にリセット =====
+  document.querySelectorAll("input[name='midSign']").forEach(r => r.checked = false);
+  document.querySelectorAll("input[name='backSign']").forEach(r => r.checked = false);
+  document.querySelectorAll("input[name='ansSign']").forEach(r => r.checked = false);
+
+  // 数字プルダウンを戻す
+  sel.value = 0;
+
+  document.getElementById("box1")?.classList.remove("wrong-box");
+  document.getElementById("box2")?.classList.remove("wrong-box");
+  document.getElementById("boxSign")?.classList.remove("wrong-box");
+  document.getElementById("boxNum")?.classList.remove("wrong-box");
+
+}
+
+// 第1段階判定
+function checkStep1() {
+  const mid = document.querySelector("input[name='midSign']:checked")?.value;
+  if (!mid) return;
+
+  document.getElementById("box1")?.classList.remove("wrong-box");
+
+  const correctChar = correctSign1 === "plus" ? "+" : "-";
+
+  if (mid === correctChar) {
+    document.getElementById("judge1").textContent = "〇";
+    document.getElementById("judge1").className = "correct";
+
+    const tr = document.getElementById("transform");
+
+    tr.style.opacity = "0";
+    tr.style.transform = "translateY(10px)";
+
+    setTimeout(() => {
+      tr.textContent =
+        `＝${dispSign(correctChar)}（${Math.abs(a)}÷${Math.abs(b)}）`
+      tr.style.transition = "all 0.4s ease-out";
+      tr.style.opacity = "1";
+      tr.style.transform = "translateY(0)";
+    }, 50);
+
+    document.getElementById("finalLine").textContent = "＝②";
+    document.getElementById("finalLine").classList.add("show");
+    document.getElementById("step2").classList.add("show");
+
+  } else {
+    document.getElementById("judge1").textContent = "×";
+    document.getElementById("judge1").className = "wrong";
+    document.getElementById("box1")?.classList.add("wrong-box");
+  }
+}
+
+
+// 第2段階判定
+function checkStep2() {
+  const sign = document.querySelector("input[name='ansSign']:checked")?.value;
+  const num = Number(sel.value);
+
+  if (!sign) return;
+
+  document.getElementById("boxSign").classList.remove("wrong-box");
+  document.getElementById("boxNum").classList.remove("wrong-box");
+
+  if (sign === correctSign2 && num === correctNum) {
+    document.getElementById("judge2").textContent = "〇";
+    document.getElementById("judge2").className = "correct";
+    document.getElementById("nextBtn").classList.remove("disabled");
+
+    const fl = document.getElementById("finalLine");
+
+    // 一度非表示状態に戻す
+    fl.classList.remove("show");
+
+    // 再描画を強制（スーッと出すため）
+    void fl.offsetWidth;
+
+    fl.textContent =
+      correctSign2 === "zero"
+        ? "＝0"
+        : `＝${dispSign(correctSign2 === "plus" ? "+" : "-")}${correctNum}`;
+
+    // 再表示
+    fl.classList.add("show");
+
+    // 正解カウント
+    correctCount++;
+    document.getElementById("scoreNum").textContent = correctCount;
+
+  } else {
+    document.getElementById("judge2").textContent = "×";
+    document.getElementById("judge2").className = "wrong";
+
+    if (sign !== correctSign2) {
+      document.getElementById("boxSign").classList.add("wrong-box");
+    }
+
+    if (num !== correctNum) {
+      document.getElementById("boxNum").classList.add("wrong-box");
+    }
+  }
+}
+
+// 初期表示
+newProblem();
+</script>
+
+</body>
+</html>

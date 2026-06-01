@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>正負の数（たし算・ひき算）</title>
+
+<style>
+body {
+  font-family: sans-serif;
+  text-align: center;
+  padding: 12px;
+}
+
+.formula {
+  font-size: 40px;
+  margin: 20px 0;
+}
+
+.answer-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.large-select {
+  font-size: 22px;
+  padding: 8px;
+  width: 100px;
+}
+
+button {
+  font-size: 22px;
+  padding: 8px 20px;
+}
+
+.judge {
+  font-size: 64px;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.judge.correct { color: red; }
+.judge.wrong { color: blue; }
+
+.hint {
+  margin-top: 10px;
+  font-size: 20px;
+  color: #444;
+}
+
+.fade {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transition: .3s;
+}
+
+.fade.show {
+  opacity: 1;
+  height: auto;
+}
+
+.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>正負の数　たし算・ひき算【（ ）を省いた式】</h2>
+
+<div id="problem" class="formula">
+  <span id="expr"></span>
+  <span id="answer" class="fade">＝ <span id="answerNum"></span></span>
+</div>
+
+<div class="answer-row">
+  <select id="ans" class="large-select"></select>
+  <button onclick="checkAnswer()">判定</button>
+  <span id="judge"></span>
+</div>
+
+<div id="hint" class="hint fade"></div>
+
+<br>
+<button id="nextBtn" class="disabled" onclick="nextProblem()">次の問題</button>
+
+<div style="margin-top:10px;">
+  正解回数：<span id="score">0</span>
+</div>
+
+<div style="margin-top:10px;">
+  <a href="index.html">⬅ TOPへ戻る</a>
+</div>
+
+<script>
+// 半角 → 全角（数値と符号）
+const problem = document.getElementById("problem");
+const ans = document.getElementById("ans");
+const judge = document.getElementById("judge");
+const hint = document.getElementById("hint");
+const exprSpan = document.getElementById("expr");
+const answerSpan = document.getElementById("answer");
+const answerNum = document.getElementById("answerNum");
+
+function z(val) {
+  return String(val).replace(/[0-9+\-]/g, s =>
+    String.fromCharCode(s.charCodeAt(0) + 0xFEE0)
+  );
+}
+
+for (let i = -26; i <= 26; i++) {
+  ans.add(new Option(z(i), i));
+}
+
+let a, b, op, correct;
+let miss = 0;
+let score = 0;
+let expr;
+
+// 問題生成
+function generateProblem() {
+  a = Math.floor(Math.random() * 27) - 13;
+  b = Math.floor(Math.random() * 27) - 13;
+  op = Math.random() < 0.5 ? "+" : "-";
+
+
+  if (op === "+") {
+    correct = a + b;
+    if (b >= 0) {
+      expr = `${z(a)} ＋ ${z(b)}`;
+    } else {
+      expr = `${z(a)} − ${z(Math.abs(b))}`;
+    }
+  } else {
+    correct = a - b;
+    if (b >= 0) {
+      expr = `${z(a)} − ${z(b)}`;
+    } else {
+      expr = `${z(a)} ＋ ${z(Math.abs(b))}`;
+    }
+  }
+
+  exprSpan.textContent = expr;
+
+  answerSpan.classList.remove("show");
+  answerNum.textContent = "";
+
+  judge.textContent = "";
+  judge.className = "";
+  hint.classList.remove("show");
+  miss = 0;
+  ans.value = 0;
+}
+
+// 判定
+function checkAnswer() {
+  if (Number(ans.value) === correct) {
+    judge.textContent = "〇";
+    judge.className = "judge correct";
+
+    // ★ 正答をセット
+    answerNum.textContent = z(correct);
+
+    // ★ スーッと表示
+    answerSpan.classList.add("show");
+
+    score++;
+    document.getElementById("score").textContent = score;
+    document.getElementById("nextBtn").classList.remove("disabled");
+  } else {
+    judge.textContent = "×";
+    judge.className = "judge wrong";
+    miss++;
+
+    if (miss >= 2) {
+      showHint();
+    }
+  }
+}
+
+function showHint() {
+  let hintText;
+
+  if (op === "+") {
+    // a + b → (+a) + (+b / -b)
+    hintText =
+      `ヒント：（${z(a >= 0 ? "＋" + a : a)}）＋（${z(b >= 0 ? "＋" + b : b)}）`;
+  } else {
+    // a - b → (+a) + (-b)
+    const negB = -b;
+    hintText =
+      `ヒント：（${z(a >= 0 ? "＋" + a : a)}）＋（${z(negB >= 0 ? "＋" + negB : negB)}）`;
+  }
+
+  hint.textContent = hintText;
+  hint.classList.add("show");
+}
+
+// 次の問題
+function nextProblem() {
+  generateProblem();
+  document.getElementById("nextBtn").classList.add("disabled");
+
+  // 正答表示を消す
+  answerSpan.classList.remove("show");
+  answerNum.textContent = "";
+}
+
+generateProblem();
+</script>
+
+</body>
+</html>

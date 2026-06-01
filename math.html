@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>数式のみ</title>
+
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    padding: 20px;
+  }
+
+  #problem {
+    font-size: 40px;
+    margin-top: 30px;
+  }
+
+  .section {
+    margin-top: 25px;
+    font-size: 22px;
+  }
+
+  button {
+    font-size: 22px;
+    padding: 10px 30px;
+    margin-top: 20px;
+  }
+
+  #judge-area {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  #result {
+    font-size: 90px;
+    min-width: 90px;
+  }
+
+  .correct {
+    color: red;
+  }
+
+  .wrong {
+    color: blue;
+  }
+
+  .disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .top-btn {
+    margin-top: 50px;
+    font-size: 18px;
+  }
+
+  .problem-row {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 30px;
+  }
+
+  /* 最初は隠す */
+  .answer-hidden {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  /* 正解時にスーッと表示 */
+  .answer-show {
+    opacity: 1;
+    transform: translateX(0);
+    transition: all 0.4s ease-out;
+    font-size: 40px;
+  }
+
+  .wrong-box {
+    border: 4px solid blue;
+    border-radius: 10px;
+    padding: 5px;
+  }
+
+</style>
+</head>
+
+<body>
+
+<!-- 数式表示（問題＋答え） -->
+<div class="problem-row">
+  <div id="problem"></div>
+  <div id="answerSlide" class="answer-hidden"></div>
+</div>
+
+<!-- 符号選択 -->
+<style>
+  .big-radio {
+    transform: scale(1.8);
+    margin: 10px;
+  }
+  label {
+    font-size: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+  }
+</style>
+<div id="boxSign" class="section">
+  符号：
+  <label><input type="radio" name="sign" value="plus" class="big-radio"><font size="5"> ＋　</font></label>
+  <label><input type="radio" name="sign" value="minus" class="big-radio"><font size="5"> －　</font></label>
+  <label><input type="radio" name="sign" value="zero" class="big-radio"><font size="5"> なし</font></label>
+</div>
+
+<!-- 数字選択 -->
+<style>
+  .large-select {
+    font-size: 25px; /* 文字サイズを大きく */
+    padding: 15px;  /* 上下左右の余白を大きく */
+    width: 80px;   /* 横幅を広げる */
+  }
+</style>
+<div id="boxNum" class="section">
+  数字：
+  <select id="number" class="large-select"></select>
+</div>
+
+<!-- 判定＋結果 -->
+<div id="judge-area">
+  <button onclick="check()">判定</button>
+  <span id="result"></span>
+</div>
+
+<!-- 次へ -->
+&emsp;<button id="nextBtn" class="disabled" onclick="nextProblem()">次へ</button>
+
+<div id="score" style="font-size:20px; margin-top:10px;">
+  正解回数：<span id="scoreNum">0</span>
+</div>
+
+<!-- TOPへ戻る -->
+<div>
+ </br>
+ <a href="index.html">⬅ TOPへ戻る</a>
+ </button>
+</div>
+
+<script>
+// ===== 状態 =====
+let num1, num2;
+let sign1, sign2;
+let correctSign;
+let correctNumber;
+let correctCount = 0;  // 正解回数（その場限り）
+
+// ===== プルダウン初期化 =====
+const sel = document.getElementById("number");
+for (let i = 0; i <= 26; i++) {
+  const opt = document.createElement("option");
+  opt.value = i;
+  opt.textContent = i;
+  sel.appendChild(opt);
+}
+
+// ===== 問題生成 =====
+function randomSign() {
+  return Math.random() < 0.5 ? 1 : -1;
+}
+
+function showProblem() {
+  num1 = Math.floor(Math.random() * 13) + 1;
+  num2 = Math.floor(Math.random() * 13) + 1;
+  sign1 = randomSign();
+  sign2 = randomSign();
+
+  const signText1 = sign1 === 1 ? "＋" : "－";
+  const signText2 = sign2 === 1 ? "＋" : "－";
+
+  document.getElementById("problem").textContent =
+    `(${signText1}${num1}) ＋ (${signText2}${num2})`;
+
+  const total = sign1 * num1 + sign2 * num2;
+
+  correctNumber = Math.abs(total);
+
+  if (total > 0) correctSign = "plus";
+  else if (total < 0) correctSign = "minus";
+  else correctSign = "zero";
+
+  resetUI();
+  const ans = document.getElementById("answerSlide");
+  ans.textContent = "";
+  ans.classList.remove("answer-show");
+  ans.classList.add("answer-hidden");
+
+}
+
+// ===== リセット =====
+function resetUI() {
+  document.getElementById("result").textContent = "";
+  document.getElementById("result").className = "";
+  document.getElementById("nextBtn").classList.add("disabled");
+  document.querySelectorAll("input[name='sign']").forEach(r => r.checked = false);
+  sel.value = 0;
+  document.getElementById("boxSign").classList.remove("wrong-box");
+  document.getElementById("boxNum").classList.remove("wrong-box");
+
+}
+
+// ===== 判定 =====
+function check() {
+  const selectedSign =
+    document.querySelector("input[name='sign']:checked")?.value;
+  const selectedNumber = Number(sel.value);
+
+  if (!selectedSign) {
+    alert("符号を選んでください");
+    return;
+  }
+
+  document.getElementById("boxSign").classList.remove("wrong-box");
+  document.getElementById("boxNum").classList.remove("wrong-box");
+
+  if (selectedSign === correctSign && selectedNumber === correctNumber) {
+    document.getElementById("result").textContent = "〇";
+    document.getElementById("result").className = "correct";
+    document.getElementById("nextBtn").classList.remove("disabled");
+
+    // ★ 正解回数を増やす
+    correctCount++;
+    document.getElementById("scoreNum").textContent = correctCount;
+
+    // ★ 答えを右からスライド表示
+    const ans = document.getElementById("answerSlide");
+
+    if (correctSign === "zero") {
+      ans.textContent = "＝0";
+    } else {
+      const signChar = correctSign === "plus" ? "＋" : "－";
+      ans.textContent = `＝${signChar}${correctNumber}`;
+    }
+
+    ans.classList.remove("answer-hidden");
+    ans.classList.add("answer-show");
+  } else {
+    document.getElementById("result").textContent = "×";
+    document.getElementById("result").className = "wrong";
+
+    if (selectedSign !== correctSign) {
+    document.getElementById("boxSign").classList.add("wrong-box");
+  }
+
+  if (selectedNumber !== correctNumber) {
+    document.getElementById("boxNum").classList.add("wrong-box");
+  }
+
+  }
+}
+
+// ===== 次の問題 =====
+function nextProblem() {
+  showProblem();
+}
+
+// ===== 初期表示 =====
+showProblem();
+</script>
+
+</body>
+</html>

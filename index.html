@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>正負の数　考え方トレーニング</title>
+
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    padding: 10px;
+    background-color: #F0F8FF;
+    min-height: 100vh;
+    box-sizing: border-box;
+  }
+
+  h1 {
+    font-size: 30px;
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    margin: 18px 0 10px;
+  }
+
+  .menu-btn {
+    display: block;
+    width: min(300px, 90vw);     /* ★ 350 → 可変 */
+    margin: 15px auto;          /* ★ 25 → 12 */
+    padding: 12px 10px;         /* ★ 20 → 12 */
+    font-size: clamp(18px, 2.2vw, 24px); /* ★ 可変文字 */
+    font-weight: bold;
+    text-decoration: none;
+    color: #000;
+    background-color: #ffffff;
+    border: 2px solid #333;     /* ★ 少し細く */
+    border-radius: 12px;
+    transition: .3s ease;
+  }
+
+  .menu-btn:hover {
+    background-color: #00BFFF;
+    color: #ffffff;
+    letter-spacing: 0.15em;
+    transform: translateY(4px);
+    border-radius: 50%;
+  }
+
+  .divider {
+    border: none;
+    border-top: 3px solid #999;
+    margin: 40px auto;
+    max-width: 800px;
+  }
+
+  .two-column {
+    position: relative;      /* 縦線の基準 */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .two-column::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 50%;
+    width: 3px;
+    background-color: #999;
+    transform: translateX(-50%);
+    background: repeating-linear-gradient(
+      to bottom,
+      #aaa,
+      #aaa 6px,
+      transparent 6px,
+      transparent 12px
+    );
+  }
+
+  @media (max-width: 700px) {
+    .two-column {
+      grid-template-columns: 1fr;
+    }
+
+    .two-column::before {
+      display: none;
+    }
+  }
+
+  @media (max-height: 700px) {
+    body {
+      overflow-y: auto;
+    }
+  }
+
+</style>
+</head>
+
+<body>
+
+<h1>正負の数　🂡トランプ＆数式ゲーム</h1>
+
+<div class="two-column">
+
+  <!-- 左カラム：正負のたし算 -->
+  <div>
+    <h2>正負のたし算</h2>
+    <a href="cards.html" class="menu-btn">🂡 トランプのみ</a>
+    <a href="cards_math.html" class="menu-btn">🂡 トランプ＋数式</a>
+    <a href="math.html" class="menu-btn">数式のみ</a>
+    <hr class="divider">
+    <h2>正負のひき算</h2>
+    <a href="math_minus.html" class="menu-btn">数式のみ</a>
+  </div>
+
+  <!-- 右カラム：ひき算～わり算 -->
+  <div>
+    <h2>正負のたし算・ひき算</h2>
+    <a href="plus_minus_noparentheses.html" class="menu-btn">（　）を省いた式</a>
+    <hr class="divider">
+    <h2>正負のかけ算</h2>
+    <a href="math_times.html" class="menu-btn">数式のみ</a>
+    <hr class="divider">
+    <h2>正負のわり算</h2>
+    <a href="math_divide.html" class="menu-btn">数式のみ</a>
+  </div>
+
+</div>
+</body>
+</html>

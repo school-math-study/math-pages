@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>トランプと数式</title>
+
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .card {
+    width: 160px;
+    margin: 20px;
+  }
+
+  #problem {
+    font-size: 36px;
+    margin-top: 0px;
+  }
+
+  .section {
+    margin-top: 25px;
+    font-size: 22px;
+  }
+
+  button {
+    font-size: 22px;
+    padding: 10px 30px;
+    margin-top: 20px;
+  }
+
+  #judge-area {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 10px;
+  }
+
+  #result {
+    font-size: 80px;
+    min-width: 80px;
+  }
+
+  .correct {
+    color: red;
+  }
+
+  .wrong {
+    color: blue;
+  }
+
+  .disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .top-btn {
+    margin-top: 50px;
+    font-size: 18px;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- トランプ表示 -->
+<div>
+  <img id="card1" class="card">
+  <img id="card2" class="card">
+</div>
+
+<!-- 数式表示 -->
+<div id="problem"></div>
+
+<!-- 色選択 -->
+<style>
+  .big-radio {
+    transform: scale(1.8);
+    margin: 10px;
+  }
+  label {
+    font-size: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+  }
+</style>
+<div class="section">
+  色：
+  <label><input type="radio" name="color" value="plus" class="big-radio"><font size="5"> 黒（＋）</font></label>
+  <label><input type="radio" name="color" value="minus" class="big-radio"><font size="5"> 赤（－）</font></label>
+  <label><input type="radio" name="color" value="zero"class="big-radio"><font size="5"> なし（符号なし）</font></label>
+</div>
+
+<!-- 数字選択 -->
+<style>
+  .large-select {
+    font-size: 25px; /* 文字サイズを大きく */
+    padding: 15px;  /* 上下左右の余白を大きく */
+    width: 80px;   /* 横幅を広げる */
+  }
+</style>
+<div class="section">
+  数字：
+  <select id="number" class="large-select"></select>
+</div>
+
+<!-- 判定＋結果 -->
+<div id="judge-area">
+  <button onclick="check()">判定</button>
+  <span id="result"></span>
+</div>
+
+<!-- 次へ -->
+&emsp;<button id="nextBtn" class="disabled" onclick="nextProblem()">次へ</button>
+
+<div id="score" style="font-size:20px; margin-top:10px;">
+  正解回数：<span id="scoreNum">0</span>
+</div>
+
+<!-- TOPへ戻る -->
+<div>
+ </br>
+ <a href="index.html">⬅ TOPへ戻る</a>
+ </button>
+</div>
+
+<script>
+// ===== 設定 =====
+const suits = ["spade", "club", "heart", "diamond"];
+
+// ===== 状態 =====
+let card1, card2;
+let correctColor;
+let correctNumber;
+let correctCount = 0;  // 正解回数（その場限り）
+
+// ===== プルダウン初期化 =====
+const sel = document.getElementById("number");
+for (let i = 0; i <= 26; i++) {
+  const opt = document.createElement("option");
+  opt.value = i;
+  opt.textContent = i;
+  sel.appendChild(opt);
+}
+
+// ===== トランプ生成 =====
+function randomCard() {
+  const suit = suits[Math.floor(Math.random() * suits.length)];
+  const num = Math.floor(Math.random() * 13) + 1;
+  const sign = (suit === "spade" || suit === "club") ? 1 : -1;
+  return { suit, num, sign };
+}
+
+// ===== 表示 =====
+function showCards() {
+  card1 = randomCard();
+  card2 = randomCard();
+
+  document.getElementById("card1").src =
+    `cards/${card1.suit}_${card1.num}.png`;
+  document.getElementById("card2").src =
+    `cards/${card2.suit}_${card2.num}.png`;
+
+  // 数式表示
+  const sign1 = card1.sign === 1 ? "＋" : "－";
+  const sign2 = card2.sign === 1 ? "＋" : "－";
+
+  document.getElementById("problem").textContent =
+    `(${sign1}${card1.num}) ＋ (${sign2}${card2.num})`;
+
+  const total = card1.sign * card1.num + card2.sign * card2.num;
+
+  correctNumber = Math.abs(total);
+  if (total > 0) correctColor = "plus";
+  else if (total < 0) correctColor = "minus";
+  else correctColor = "zero";
+
+  resetUI();
+}
+
+// ===== リセット =====
+function resetUI() {
+  document.getElementById("result").textContent = "";
+  document.getElementById("result").className = "";
+  document.getElementById("nextBtn").classList.add("disabled");
+  document.querySelectorAll("input[name='color']").forEach(r => r.checked = false);
+  sel.value = 0;
+}
+
+// ===== 判定 =====
+function check() {
+  const selectedColor =
+    document.querySelector("input[name='color']:checked")?.value;
+  const selectedNumber = Number(sel.value);
+
+  if (!selectedColor) {
+    alert("色を選んでください");
+    return;
+  }
+
+  if (selectedColor === correctColor && selectedNumber === correctNumber) {
+    document.getElementById("result").textContent = "〇";
+    document.getElementById("result").className = "correct";
+    document.getElementById("nextBtn").classList.remove("disabled");
+
+    // ★ 正解回数を増やす
+    correctCount++;
+    document.getElementById("scoreNum").textContent = correctCount;
+
+  } else {
+    document.getElementById("result").textContent = "×";
+    document.getElementById("result").className = "wrong";
+  }
+}
+
+// ===== 次の問題 =====
+function nextProblem() {
+  showCards();
+}
+
+// ===== 初期表示 =====
+showCards();
+</script>
+
+</body>
+</html>
